@@ -1,0 +1,6 @@
+opencv-python
+pytesseract
+rapidfuzz
+requests
+flask
+mediapipe

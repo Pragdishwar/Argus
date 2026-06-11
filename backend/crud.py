@@ -85,3 +85,20 @@ def create_verification_record(db: Session, record: schemas.VerificationRecordCr
     db.commit()
     db.refresh(db_record)
     return db_record
+
+# Simulator / Reset Tools
+def delete_all_verifications(db: Session):
+    db.query(models.VerificationRecord).delete()
+    db.commit()
+
+def delete_all_alerts(db: Session):
+    db.query(models.Alert).delete()
+    db.commit()
+
+def delete_all_audit_logs(db: Session):
+    db.query(models.AuditLog).delete()
+    db.commit()
+
+def delete_all_manifests(db: Session):
+    db.query(models.Manifest).delete()
+    db.commit()

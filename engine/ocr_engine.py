@@ -8,8 +8,8 @@ import time
 class OCREngine:
     def __init__(self, manifest_client: ManifestClient):
         self.manifest_client = manifest_client
-        # Note: If Tesseract is not in your PATH, you need to point pytesseract to the executable here:
-        # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        # Point pytesseract to the executable:
+        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
     def extract_text(self, frame):
         """Preprocesses the frame and extracts text using Tesseract."""

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -15,6 +16,15 @@ app = FastAPI(
     title="ARGUS Backend API",
     description="Backend for Autonomous Real-time Gate & Cargo Unified Surveillance",
     version="1.0.0"
+)
+
+# Enable CORS for Next.js frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allow all origins for dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Manifest Endpoints ---
@@ -117,6 +127,62 @@ async def read_verification(record_id: int, db: Session = Depends(get_db)):
 @app.get("/system-health", tags=["System Health"])
 async def check_health():
     return {"status": "ok", "service": "ARGUS Backend"}
+
+# --- Simulator Endpoints ---
+@app.post("/api/simulator/seed", tags=["Simulator"])
+async def seed_simulator(db: Session = Depends(get_db)):
+    import random
+    import datetime
+    import time
+    
+    # 1. Seed Manifests
+    run_id = str(int(time.time()))[-4:]
+    mock_manifests = [
+        {"package_id": f"PKG-{run_id}-1", "flight_number": "AA100", "destination": "NEW YORK", "status": "Pending"},
+        {"package_id": f"PKG-{run_id}-2", "flight_number": "BA200", "destination": "LONDON", "status": "Pending"},
+        {"package_id": f"PKG-{run_id}-3", "flight_number": "JL300", "destination": "TOKYO", "status": "Pending"},
+        {"package_id": f"PKG-{run_id}-4", "flight_number": "AF400", "destination": "PARIS", "status": "Pending"},
+        {"package_id": f"PKG-{run_id}-5", "flight_number": "LH500", "destination": "FRANKFURT", "status": "Pending"},
+    ]
+    for m in mock_manifests:
+        try:
+            crud.create_manifest(db, schemas.ManifestCreate(**m))
+        except Exception:
+            pass # Ignore duplicates if already seeded
+
+    # 2. Add some dummy verifications
+    verifs = []
+    for i in range(5):
+        pkg = mock_manifests[i]["package_id"]
+        v = crud.create_verification_record(db, schemas.VerificationRecordCreate(
+            package_id=pkg,
+            ocr_status="MATCH",
+            fingerprint_status="MATCH",
+            zone_status="Correct Gate" if i < 3 else "Wrong Gate",
+            disagreement_score=0 if i < 3 else 1
+        ))
+        verifs.append(v)
+        
+    # Broadcast to frontend that seeding is complete
+    await manager.broadcast({"event": "simulator_seeded", "data": {}})
+    
+    return {"status": "seeded", "verifications_added": len(verifs)}
+
+@app.post("/api/simulator/reset", tags=["Simulator"])
+async def reset_simulator(db: Session = Depends(get_db)):
+    crud.delete_all_verifications(db)
+    crud.delete_all_alerts(db)
+    crud.delete_all_audit_logs(db)
+    crud.delete_all_manifests(db)
+    
+    # Broadcast reset to frontend
+    await manager.broadcast({"event": "simulator_reset", "data": {}})
+    return {"status": "reset"}
+
+@app.post("/api/simulator/stream/start", tags=["Simulator"])
+async def start_stream():
+    # In reality, this would trigger the CV script or IP camera stream
+    return {"status": "stream_started"}
 
 # --- WebSockets ---
 @app.websocket("/ws/live")

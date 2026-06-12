@@ -151,9 +151,16 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
 
             {/* Gate Topology Placeholder */}
             <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 flex flex-col shadow-inner">
-               <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xs font-bold text-neutral-500 tracking-widest uppercase">Gate Topology - LHR-T5</h3>
-                  <div className="text-xs font-mono bg-neutral-950 border border-neutral-800 px-2 py-1 rounded text-neutral-400">
+               <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xs font-bold text-neutral-500 tracking-widest uppercase">Gate Topology - LHR-T5</h3>
+                    <div className="text-[10px] text-neutral-500 mt-1 font-mono flex gap-3">
+                      <span className="text-green-500">✓ approved</span>
+                      <span className="text-yellow-500">! warning</span>
+                      <span className="text-red-500">✗ blocked</span>
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono bg-neutral-950 border border-neutral-800 px-2 py-1 rounded text-neutral-400 mt-1">
                     <span className="text-white mr-1">{loadedCount}</span> CARGO TRACKED
                   </div>
                </div>
@@ -241,7 +248,12 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                               {v ? <span className={v.zone_status === 'Correct Gate' ? 'text-green-400' : 'text-red-400'}>{v.zone_status === 'Correct Gate' ? '✓' : '×'}</span> : <span className="text-neutral-600">-</span>}
                             </td>
                             <td className="p-3 text-right">
-                              <span className={`px-2 py-1 rounded ${statusBadge}`}>{statusText}</span>
+                              <span 
+                                className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
+                                title={v ? `Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}` : 'Pending verification'}
+                              >
+                                {statusText}
+                              </span>
                             </td>
                           </tr>
                         );
@@ -278,7 +290,12 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                                 <span className={v.zone_status === 'Correct Gate' ? 'text-green-400' : 'text-red-400'}>{v.zone_status === 'Correct Gate' ? '✓' : '×'}</span>
                               </td>
                               <td className="p-3 text-right">
-                                <span className={`px-2 py-1 rounded ${statusBadge}`}>{statusText}</span>
+                                <span 
+                                  className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
+                                  title={`Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}`}
+                                >
+                                  {statusText}
+                                </span>
                               </td>
                             </tr>
                           );

@@ -65,11 +65,28 @@ def trigger_scan():
     
     # Map destination to package ID
     current_package_id = f"PKG-{int(time.time())}"
+    found_manifest = False
     for item in manifest_client.manifest_data:
         if item.get("destination", "").upper() == dest:
             current_package_id = item["package_id"]
+            found_manifest = True
             break
             
+    if not found_manifest:
+        import requests
+        import random
+        try:
+            dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
+            requests.post("http://127.0.0.1:8000/manifest", json={
+                "package_id": current_package_id,
+                "flight_number": "MN" + str(int(time.time()) % 1000),
+                "destination": dest if dest else random.choice(dummy_cities),
+                "status": "Pending"
+            }, timeout=2)
+            manifest_client.fetch_manifest()
+        except:
+            pass
+
     ocr_status = "MATCH" if dest else "MISMATCH"
     current_dest = dest
     

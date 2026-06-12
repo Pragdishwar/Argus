@@ -1,9 +1,13 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 
-export default function AuditView() {
+export default function AuditView({ logs = [] }: { logs?: any[] }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [logs] = useState<any[]>([]); // We would fetch /api/audit here in reality
+  
+  const filteredLogs = logs.filter(log => 
+    log.package_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.action?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6 h-[calc(100vh-80px)] overflow-y-auto">
@@ -39,14 +43,14 @@ export default function AuditView() {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-800/50">
-            {logs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-12 text-center text-neutral-500 italic">No audit entries.</td>
               </tr>
             ) : (
-              logs.map((log, idx) => (
+              filteredLogs.map((log, idx) => (
                 <tr key={idx} className="hover:bg-neutral-800/30">
-                  <td className="p-4 text-neutral-400">{log.timestamp}</td>
+                  <td className="p-4 text-neutral-400">{new Date(log.timestamp).toLocaleString()}</td>
                   <td className="p-4 text-blue-400">{log.action}</td>
                   <td className="p-4 text-white font-bold">{log.package_id}</td>
                   <td className="p-4 text-neutral-400">SYSTEM</td>

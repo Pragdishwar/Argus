@@ -18,8 +18,8 @@ class FingerprintEngine:
 
         target_hist = self._calculate_histogram(frame)
         
-        # Compare histograms using correlation
-        score = cv2.compareHist(self.reference_hist, target_hist, cv2.HISTCMP_CORREL)
+        # Compare histograms using intersection (values are naturally 0.0 to 1.0 when normalized)
+        score = cv2.compareHist(self.reference_hist, target_hist, cv2.HISTCMP_INTERSECT)
         
         # Ensure score is between 0 and 1
         score = max(0.0, min(1.0, score))

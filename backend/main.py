@@ -30,7 +30,9 @@ app.add_middleware(
 # --- Manifest Endpoints ---
 @app.post("/manifest", response_model=schemas.ManifestResponse, tags=["Manifest"])
 async def create_manifest(manifest: schemas.ManifestCreate, db: Session = Depends(get_db)):
-    return crud.create_manifest(db=db, manifest=manifest)
+    db_manifest = crud.create_manifest(db=db, manifest=manifest)
+    await manager.broadcast({"event": "manifest_updated", "data": {}})
+    return db_manifest
 
 @app.get("/manifest", response_model=List[schemas.ManifestResponse], tags=["Manifest"])
 async def read_manifests(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -98,6 +100,28 @@ async def read_audit_logs(skip: int = 0, limit: int = 100, db: Session = Depends
 @app.post("/verifications", response_model=schemas.VerificationRecordResponse, tags=["Verifications"])
 async def create_verification_record(record: schemas.VerificationRecordCreate, db: Session = Depends(get_db)):
     db_record = crud.create_verification_record(db=db, record=record)
+    
+    if db_record.disagreement_score > 0:
+        action = "System BLOCK" if db_record.disagreement_score >= 2 else "System HOLD"
+        db_log = crud.create_audit_log(db=db, audit_log=schemas.AuditLogCreate(
+            package_id=db_record.package_id,
+            action=action,
+            result=f"OCR: {db_record.ocr_status}, FP: {db_record.fingerprint_status}, Zone: {db_record.zone_status}",
+            severity="HIGH" if action == "System BLOCK" else "MEDIUM"
+        ))
+        # Optional: broadcast new audit log
+        await manager.broadcast({
+            "event": "new_audit",
+            "data": {
+                "id": db_log.id,
+                "timestamp": db_log.timestamp.isoformat(),
+                "package_id": db_log.package_id,
+                "action": db_log.action,
+                "result": db_log.result,
+                "severity": db_log.severity
+            }
+        })
+    
     # Broadcast verification result
     await manager.broadcast({
         "event": "new_verification",
@@ -156,12 +180,21 @@ async def seed_simulator(db: Session = Depends(get_db)):
         pkg = mock_manifests[i]["package_id"]
         v = crud.create_verification_record(db, schemas.VerificationRecordCreate(
             package_id=pkg,
-            ocr_status="MATCH",
-            fingerprint_status="MATCH",
+            ocr_status="MATCH" if i != 3 else "MISMATCH",
+            fingerprint_status="MATCH" if i != 4 else "MISMATCH",
             zone_status="Correct Gate" if i < 3 else "Wrong Gate",
-            disagreement_score=0 if i < 3 else 1
+            disagreement_score=0 if i < 3 else (2 if i == 3 else 1)
         ))
         verifs.append(v)
+        
+        if v.disagreement_score > 0:
+            action = "System BLOCK" if v.disagreement_score >= 2 else "System HOLD"
+            crud.create_audit_log(db, schemas.AuditLogCreate(
+                package_id=pkg,
+                action=action,
+                result=f"OCR: {v.ocr_status}, FP: {v.fingerprint_status}, Zone: {v.zone_status}",
+                severity="HIGH" if action == "System BLOCK" else "MEDIUM"
+            ))
         
     # Broadcast to frontend that seeding is complete
     await manager.broadcast({"event": "simulator_seeded", "data": {}})

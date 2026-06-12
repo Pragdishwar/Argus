@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [verifications, setVerifications] = useState<VerificationRecord[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [manifests, setManifests] = useState<Manifest[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
 
@@ -53,6 +54,11 @@ export default function Dashboard() {
     fetch('http://127.0.0.1:8000/alerts')
       .then(res => res.json())
       .then(data => setAlerts(data.slice(0, 20)))
+      .catch(e => console.error(e));
+
+    fetch('http://127.0.0.1:8000/audit')
+      .then(res => res.json())
+      .then(data => setAuditLogs(data.slice(0, 50)))
       .catch(e => console.error(e));
   };
 
@@ -72,11 +78,14 @@ export default function Dashboard() {
         setVerifications((prev) => [payload.data, ...prev].slice(0, 50));
       } else if (payload.event === "new_alert") {
         setAlerts((prev) => [payload.data, ...prev].slice(0, 20));
+      } else if (payload.event === "new_audit") {
+        setAuditLogs((prev) => [payload.data, ...prev].slice(0, 50));
       } else if (payload.event === "simulator_reset") {
         setVerifications([]);
         setAlerts([]);
         setManifests([]);
-      } else if (payload.event === "simulator_seeded") {
+        setAuditLogs([]);
+      } else if (payload.event === "simulator_seeded" || payload.event === "manifest_updated") {
         fetchData();
       }
     };
@@ -86,14 +95,16 @@ export default function Dashboard() {
     };
   }, []);
 
+  const blockedCount = verifications.filter((v: any) => v.disagreement_score >= 2).length;
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-sans overflow-hidden">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isConnected={isConnected} />
+    <div className="min-h-screen bg-neutral-950 text-neutral-300 font-sans flex flex-col">
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isConnected={isConnected} blockedCount={blockedCount} />
       
       <main>
         {activeTab === "OPS" && <OpsView verifications={verifications} alerts={alerts} manifests={manifests} isStreaming={isStreaming} setIsStreaming={setIsStreaming} />}
         {activeTab === "ANALYTICS" && <AnalyticsView verifications={verifications} />}
-        {activeTab === "AUDIT" && <AuditView />}
+        {activeTab === "AUDIT" && <AuditView logs={auditLogs} />}
       </main>
     </div>
   );

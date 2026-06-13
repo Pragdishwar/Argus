@@ -149,6 +149,6 @@ def trigger_verify():
 
 if __name__ == "__main__":
     try:
-        app.run(host='127.0.0.1', port=5002, threaded=True)
+        app.run(host='0.0.0.0', port=5002, threaded=True)
     finally:
         camera.release()

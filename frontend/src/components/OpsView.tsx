@@ -12,7 +12,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
 
     const handleCVAction = async (action: string) => {
       try {
-        await fetch(`https://argus-cv-demo.loca.lt/${action}`, { method: 'POST' });
+        await fetch(`https://d52f9e967578a8.lhr.life/${action}`, { method: 'POST' });
       } catch (e) {
         console.error("CV Engine Error:", e);
       }
@@ -132,7 +132,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
               <div className="flex-1 relative bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent pointer-events-none z-10"></div>
                 {isStreaming ? (
-                  <img src="https://argus-cv-demo.loca.lt/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
+                  <img src="https://d52f9e967578a8.lhr.life/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
                 ) : (
                   <div className="w-64 h-40 border border-yellow-500/50 bg-yellow-500/5 rounded relative flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.1)] z-0">
                     <span className="absolute -top-6 text-yellow-500 text-xs font-mono tracking-widest">AWAITING STREAM</span>

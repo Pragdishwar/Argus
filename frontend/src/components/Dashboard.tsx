@@ -5,6 +5,7 @@ import Navigation from "./Navigation";
 import OpsView from "./OpsView";
 import AnalyticsView from "./AnalyticsView";
 import AuditView from "./AuditView";
+import { supabase } from "../lib/supabase";
 
 type VerificationRecord = {
   id: number;
@@ -40,58 +41,52 @@ export default function Dashboard() {
   const [isConnected, setIsConnected] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  const fetchData = () => {
-    fetch('http://127.0.0.1:8000/manifest')
-      .then(res => res.json())
-      .then(data => setManifests(data))
-      .catch(e => console.error(e));
+  const fetchData = async () => {
+    try {
+      const { data: manifestData } = await supabase.from('manifests').select('*').order('id', { ascending: true });
+      if (manifestData) setManifests(manifestData);
 
-    fetch('http://127.0.0.1:8000/verifications')
-      .then(res => res.json())
-      .then(data => setVerifications(data.reverse().slice(0, 50)))
-      .catch(e => console.error(e));
+      const { data: verifData } = await supabase.from('verification_records').select('*').order('id', { ascending: false }).limit(50);
+      if (verifData) setVerifications(verifData);
 
-    fetch('http://127.0.0.1:8000/alerts')
-      .then(res => res.json())
-      .then(data => setAlerts(data.slice(0, 20)))
-      .catch(e => console.error(e));
+      const { data: alertData } = await supabase.from('alerts').select('*').order('timestamp', { ascending: false }).limit(20);
+      if (alertData) setAlerts(alertData);
 
-    fetch('http://127.0.0.1:8000/audit')
-      .then(res => res.json())
-      .then(data => setAuditLogs(data.slice(0, 50)))
-      .catch(e => console.error(e));
+      const { data: auditData } = await supabase.from('audit_logs').select('*').order('timestamp', { ascending: false }).limit(50);
+      if (auditData) setAuditLogs(auditData);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useEffect(() => {
     // Initial fetch
     fetchData();
 
-    // Connect to FastAPI WebSocket
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws/live");
-
-    ws.onopen = () => setIsConnected(true);
-    ws.onclose = () => setIsConnected(false);
-
-    ws.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
-      if (payload.event === "new_verification") {
-        setVerifications((prev) => [payload.data, ...prev].slice(0, 50));
-      } else if (payload.event === "new_alert") {
-        setAlerts((prev) => [payload.data, ...prev].slice(0, 20));
-      } else if (payload.event === "new_audit") {
-        setAuditLogs((prev) => [payload.data, ...prev].slice(0, 50));
-      } else if (payload.event === "simulator_reset") {
-        setVerifications([]);
-        setAlerts([]);
-        setManifests([]);
-        setAuditLogs([]);
-      } else if (payload.event === "simulator_seeded" || payload.event === "manifest_updated") {
-        fetchData();
-      }
-    };
+    // Connect to Supabase Realtime
+    const channel = supabase.channel('schema-db-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'verification_records' }, (payload) => {
+        setVerifications((prev) => [payload.new as VerificationRecord, ...prev].slice(0, 50));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+        setAlerts((prev) => [payload.new as Alert, ...prev].slice(0, 20));
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, (payload) => {
+        setAuditLogs((prev) => [payload.new, ...prev].slice(0, 50));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'manifests' }, () => {
+        fetchData(); // Refetch manifests to keep order and handle deletes
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'verification_records' }, () => {
+        fetchData(); // Refetch all if simulator resets
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setIsConnected(true);
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') setIsConnected(false);
+      });
 
     return () => {
-      ws.close();
+      supabase.removeChannel(channel);
     };
   }, []);
 

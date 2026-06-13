@@ -3,8 +3,12 @@ import time
 import threading
 
 class ManifestClient:
-    def __init__(self, api_url="http://127.0.0.1:5000/manifest"):
+    def __init__(self, api_url="https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1/manifests?select=*"):
         self.api_url = api_url
+        self.headers = {
+            "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+            "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR"
+        }
         self.manifest_data = []
         self.destinations = []
         self.running = False
@@ -31,7 +35,7 @@ class ManifestClient:
     def fetch_manifest(self):
         """Fetches the latest manifest data from the API."""
         try:
-            response = requests.get(self.api_url, timeout=5)
+            response = requests.get(self.api_url, headers=self.headers, timeout=5)
             response.raise_for_status()
             self.manifest_data = response.json()
             # Extract unique destinations for fuzzy matching

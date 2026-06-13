@@ -77,12 +77,22 @@ def trigger_scan():
         import random
         try:
             dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
-            requests.post("http://127.0.0.1:8000/manifest", json={
-                "package_id": current_package_id,
-                "flight_number": "MN" + str(int(time.time()) % 1000),
-                "destination": dest if dest else random.choice(dummy_cities),
-                "status": "Pending"
-            }, timeout=2)
+            requests.post(
+                "https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1/manifests", 
+                headers={
+                    "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+                    "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal"
+                },
+                json={
+                    "package_id": current_package_id,
+                    "flight_number": "MN" + str(int(time.time()) % 1000),
+                    "destination": dest if dest else random.choice(dummy_cities),
+                    "status": "Pending"
+                }, 
+                timeout=2
+            )
             manifest_client.fetch_manifest()
         except:
             pass

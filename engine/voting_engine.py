@@ -2,8 +2,14 @@ import requests
 import json
 
 class VotingEngine:
-    def __init__(self, backend_url="http://127.0.0.1:8000"):
+    def __init__(self, backend_url="https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1"):
         self.backend_url = backend_url
+        self.headers = {
+            "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+            "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+        }
         self.conveyor_url = "http://127.0.0.1:5001/halt"
 
     def calculate_score(self, ocr_match, fingerprint_match, zone_correct):
@@ -39,11 +45,15 @@ class VotingEngine:
         }
         
         try:
-            requests.post(f"{self.backend_url}/verifications", json=payload, timeout=2)
+            requests.post(f"{self.backend_url}/verification_records", headers=self.headers, json=payload, timeout=2)
         except requests.RequestException as e:
             print(f"Failed to post verification: {e}")
 
-        # 2. Check thresholds for Alerts & Halting
+        # 2. Check thresholds for Alerts & Halting & Audit
+        if score > 0:
+            action = "System BLOCK" if score >= 2 else "System HOLD"
+            self._post_audit_log(package_id, action, f"OCR: {ocr_status}, FP: {fingerprint_status}, Zone: {zone_status}")
+
         if score >= 1:
             severity = "medium" if score == 1 else ("high" if score == 2 else "critical")
             message = f"Mismatch detected for package {package_id}. Conflicts: {int(score)}."
@@ -62,7 +72,19 @@ class VotingEngine:
             "message": message
         }
         try:
-            requests.post(f"{self.backend_url}/alerts", json=payload, timeout=2)
+            requests.post(f"{self.backend_url}/alerts", headers=self.headers, json=payload, timeout=2)
+        except requests.RequestException:
+            pass
+
+    def _post_audit_log(self, package_id, action, result):
+        payload = {
+            "package_id": package_id,
+            "action": action,
+            "result": result,
+            "severity": "HIGH" if "BLOCK" in action else "MEDIUM"
+        }
+        try:
+            requests.post(f"{self.backend_url}/audit_logs", headers=self.headers, json=payload, timeout=2)
         except requests.RequestException:
             pass
 

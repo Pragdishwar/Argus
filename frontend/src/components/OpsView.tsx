@@ -4,9 +4,9 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
   
   const handleFastAPIAction = async (action: string) => {
     try {
-      await fetch(`http://127.0.0.1:8000/api/simulator/${action}`, { method: 'POST' });
+      await fetch(`/api/simulator/${action}`, { method: 'POST' });
     } catch (e) {
-      console.error("FastAPI Error:", e);
+      console.error("Simulator Error:", e);
     }
   };
 

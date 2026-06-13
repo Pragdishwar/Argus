@@ -1,33 +1,53 @@
 import cv2
+import threading
+import time
 
 class CameraFeed:
-    def __init__(self, camera_index=0, target_fps=15):
+    def __init__(self, camera_index=0, target_fps=30):
         self.camera_index = camera_index
         self.target_fps = target_fps
         self.cap = None
+        self.frame = None
+        self.ret = False
+        self.running = False
+        self.lock = threading.Lock()
 
     def start(self):
-        """Initializes the webcam capture."""
+        """Initializes the webcam capture and starts background thread."""
         self.cap = cv2.VideoCapture(self.camera_index)
         if not self.cap.isOpened():
             raise RuntimeError(f"Failed to open camera index {self.camera_index}")
         
-        # Try to set framerate (Note: some webcams ignore this)
         self.cap.set(cv2.CAP_PROP_FPS, self.target_fps)
-        # Try to set resolution to 720p as per SRS
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         print(f"Camera started. Resolution: {self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
+        
+        self.running = True
+        self.thread = threading.Thread(target=self._update, daemon=True)
+        self.thread.start()
+
+    def _update(self):
+        while self.running:
+            if self.cap is not None and self.cap.isOpened():
+                ret, frame = self.cap.read()
+                with self.lock:
+                    self.ret = ret
+                    self.frame = frame
+            time.sleep(0.001)
 
     def get_frame(self):
-        """Reads a frame from the webcam. Returns (success, frame)."""
-        if self.cap is None or not self.cap.isOpened():
+        """Reads the latest frame from the background thread."""
+        with self.lock:
+            if self.ret and self.frame is not None:
+                return self.ret, self.frame.copy()
             return False, None
-        ret, frame = self.cap.read()
-        return ret, frame
 
     def release(self):
         """Releases the webcam resource."""
+        self.running = False
+        if hasattr(self, 'thread'):
+            self.thread.join(timeout=1.0)
         if self.cap is not None:
             self.cap.release()
             self.cap = None

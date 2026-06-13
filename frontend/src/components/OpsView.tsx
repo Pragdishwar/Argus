@@ -1,6 +1,35 @@
-import { Play, Database, RotateCcw, Crosshair, Scan, ShieldCheck } from "lucide-react";
+import { Play, Database, RotateCcw, Crosshair, Scan, ShieldCheck, Camera, Webhook } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 export default function OpsView({ verifications, alerts, manifests, isStreaming, setIsStreaming }: any) {
+  const [cameraMode, setCameraMode] = useState<'edge' | 'local'>('edge');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (cameraMode === 'local' && isStreaming) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        })
+        .catch(err => console.error("Camera access denied:", err));
+    } else {
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+    }
+    
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
+      }
+    };
+  }, [cameraMode, isStreaming]);
   
   const handleFastAPIAction = async (action: string) => {
     try {
@@ -12,7 +41,23 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
 
     const handleCVAction = async (action: string) => {
       try {
-        await fetch(`https://multimedia-notify-gates-drivers.trycloudflare.com/${action}`, { method: 'POST' });
+        if (cameraMode === 'local') {
+          if (!videoRef.current || !canvasRef.current) return;
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d')?.drawImage(video, 0, 0);
+          const base64Image = canvas.toDataURL('image/jpeg');
+          
+          await fetch(`https://multimedia-notify-gates-drivers.trycloudflare.com/${action}_remote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Image })
+          });
+        } else {
+          await fetch(`https://multimedia-notify-gates-drivers.trycloudflare.com/${action}`, { method: 'POST' });
+        }
       } catch (e) {
         console.error("CV Engine Error:", e);
       }
@@ -78,6 +123,20 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
           <section>
             <h3 className="text-xs font-bold text-neutral-500 tracking-widest mb-3 uppercase">Simulator</h3>
             <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 flex flex-col gap-3">
+              <div className="flex bg-neutral-950 border border-neutral-800 rounded p-1 mb-2">
+                <button 
+                  onClick={() => { setCameraMode('edge'); setIsStreaming(false); }}
+                  className={`flex-1 py-1 text-xs font-bold rounded flex items-center justify-center gap-1 ${cameraMode === 'edge' ? 'bg-neutral-800 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                >
+                  <Webhook size={12} /> Edge Cam
+                </button>
+                <button 
+                  onClick={() => { setCameraMode('local'); setIsStreaming(false); }}
+                  className={`flex-1 py-1 text-xs font-bold rounded flex items-center justify-center gap-1 ${cameraMode === 'local' ? 'bg-neutral-800 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+                >
+                  <Camera size={12} /> Mobile Cam
+                </button>
+              </div>
               <button onClick={() => setIsStreaming(!isStreaming)} className={`w-full font-bold py-3 rounded-md flex justify-center items-center gap-2 transition-colors ${isStreaming ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'}`}>
                 <Play fill="currentColor" size={16} /> {isStreaming ? "STOP STREAM" : "START STREAM"}
               </button>
@@ -132,7 +191,11 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
               <div className="flex-1 relative bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent pointer-events-none z-10"></div>
                 {isStreaming ? (
-                  <img src="https://multimedia-notify-gates-drivers.trycloudflare.com/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
+                  cameraMode === 'edge' ? (
+                    <img src="https://multimedia-notify-gates-drivers.trycloudflare.com/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
+                  ) : (
+                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover relative z-0 -scale-x-100"></video>
+                  )
                 ) : (
                   <div className="w-64 h-40 border border-yellow-500/50 bg-yellow-500/5 rounded relative flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(234,179,8,0.1)] z-0">
                     <span className="absolute -top-6 text-yellow-500 text-xs font-mono tracking-widest">AWAITING STREAM</span>
@@ -142,6 +205,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                     <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-yellow-500"></div>
                   </div>
                 )}
+                <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
               </div>
               <div className="p-2 border-t border-neutral-800 flex justify-between items-center bg-neutral-950/50 text-[10px] font-mono text-neutral-500 relative z-20">
                 <span>[ ] OCR active - 1280x720 - {isStreaming ? "30fps" : "0fps"}</span>

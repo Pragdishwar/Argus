@@ -1,13 +1,20 @@
 import requests
 import time
 import threading
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 class ManifestClient:
-    def __init__(self, api_url="https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1/manifests?select=*"):
+    def __init__(self, api_url=f"{SUPABASE_URL}/rest/v1/manifests?select=*"):
         self.api_url = api_url
         self.headers = {
-            "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
-            "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR"
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}"
         }
         self.manifest_data = []
         self.destinations = []

@@ -75,13 +75,20 @@ def trigger_scan():
     if not found_manifest:
         import requests
         import random
+        import os
+        from dotenv import load_dotenv
+
+        load_dotenv()
+        SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+        SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+
         try:
             dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
             requests.post(
-                "https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1/manifests", 
+                f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
-                    "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
-                    "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_KEY}",
                     "Content-Type": "application/json",
                     "Prefer": "return=minimal"
                 },

@@ -1,12 +1,19 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 class VotingEngine:
-    def __init__(self, backend_url="https://uqoxensqmbcmanyulqsk.supabase.co/rest/v1"):
+    def __init__(self, backend_url=f"{SUPABASE_URL}/rest/v1"):
         self.backend_url = backend_url
         self.headers = {
-            "apikey": "sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
-            "Authorization": "Bearer sb_publishable_xcCThN3in7kOknQillUqEQ_EXor3IdR",
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
         }

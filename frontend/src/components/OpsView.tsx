@@ -1,4 +1,4 @@
-import { Play, Database, RotateCcw, Crosshair, Scan, ShieldCheck, Camera, Webhook } from "lucide-react";
+import { Play, Database, RotateCcw, Crosshair, Scan, ShieldCheck, Camera, Webhook, Activity } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 export default function OpsView({ verifications, alerts, manifests, isStreaming, setIsStreaming }: any) {

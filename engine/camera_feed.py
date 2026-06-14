@@ -40,7 +40,8 @@ class CameraFeed:
         """Reads the latest frame from the background thread."""
         with self.lock:
             if self.ret and self.frame is not None:
-                return self.ret, self.frame.copy()
+                # Flip horizontally to fix webcam mirror effect for OCR
+                return self.ret, cv2.flip(self.frame.copy(), 1)
             return False, None
 
     def release(self):

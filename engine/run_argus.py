@@ -136,7 +136,8 @@ def decode_base64_image(b64_str):
         b64_str = b64_str.split(",")[1]
     img_bytes = base64.b64decode(b64_str)
     np_arr = np.frombuffer(img_bytes, np.uint8)
-    return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    return cv2.flip(frame, 1)
 
 @app.route('/scan_remote', methods=['POST'])
 def trigger_scan_remote():

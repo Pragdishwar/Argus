@@ -29,6 +29,7 @@ camera.start()
 # Global state
 current_package_id = None
 current_dest = None
+verify_counter = 0
 
 def generate_frames():
     """Generator for MJPEG stream"""
@@ -195,10 +196,12 @@ def trigger_scan_remote():
 
 @app.route('/verify', methods=['POST'])
 def trigger_verify():
-    global current_package_id, current_dest
+    global current_package_id, current_dest, verify_counter
     
     if not current_package_id:
         return jsonify({"status": "error", "message": "Scan a package first."}), 400
+        
+    verify_counter += 1
         
     ret, frame = camera.get_frame()
     if not ret:
@@ -216,6 +219,12 @@ def trigger_verify():
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
     score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
+    # FOR DEMO: Force failure on even verification attempts
+    if verify_counter % 2 == 0:
+        z_status = "Wrong Gate"
+        fp_status = "MISMATCH"
+        score = 2
+    
     resp = {
         "status": "success",
         "package_id": current_package_id,
@@ -232,10 +241,12 @@ def trigger_verify():
 
 @app.route('/verify_remote', methods=['POST'])
 def trigger_verify_remote():
-    global current_package_id, current_dest
+    global current_package_id, current_dest, verify_counter
     
     if not current_package_id:
         return jsonify({"status": "error", "message": "Scan a package first."}), 400
+        
+    verify_counter += 1
         
     data = request.json
     if not data or 'image' not in data:
@@ -254,6 +265,12 @@ def trigger_verify_remote():
     # 3. Voting Engine
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
     score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
+    
+    # FOR DEMO: Force failure on even verification attempts
+    if verify_counter % 2 == 0:
+        z_status = "Wrong Gate"
+        fp_status = "MISMATCH"
+        score = 2
     
     resp = {
         "status": "success",

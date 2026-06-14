@@ -50,13 +50,13 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
           canvas.getContext('2d')?.drawImage(video, 0, 0);
           const base64Image = canvas.toDataURL('image/jpeg');
           
-          await fetch(`https://surround-soundtrack-johns-shed.trycloudflare.com/${action}_remote`, {
+          await fetch(`https://sanyo-collectibles-characterized-accept.trycloudflare.com/${action}_remote`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ image: base64Image })
           });
         } else {
-          await fetch(`https://surround-soundtrack-johns-shed.trycloudflare.com/${action}`, { method: 'POST' });
+          await fetch(`https://sanyo-collectibles-characterized-accept.trycloudflare.com/${action}`, { method: 'POST' });
         }
       } catch (e) {
         console.error("CV Engine Error:", e);
@@ -201,7 +201,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent pointer-events-none z-10"></div>
                 {isStreaming ? (
                   cameraMode === 'edge' ? (
-                    <img src="https://surround-soundtrack-johns-shed.trycloudflare.com/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
+                    <img src="https://sanyo-collectibles-characterized-accept.trycloudflare.com/video_feed" alt="Live Feed" className="w-full h-full object-cover relative z-0 -scale-x-100" />
                   ) : (
                     <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover relative z-0 -scale-x-100"></video>
                   )

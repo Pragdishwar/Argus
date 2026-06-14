@@ -322,10 +322,10 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                         let gate = `${gateChar}0${gateNum}`;
                         let weight = (100 + (m.id * 13.5)).toFixed(1);
 
-                        if (m.package_id === 'PKG-5873-1') {
+                        if (m.package_id.startsWith('PKG-5873-1')) {
                           weight = '154.0';
                           gate = 'A04';
-                        } else if (m.package_id === 'PKG-5873-2') {
+                        } else if (m.package_id.startsWith('PKG-5873-2')) {
                           weight = '167.5';
                           gate = 'B02';
                         }

@@ -69,8 +69,10 @@ def trigger_scan():
     awb = ocr_res.get("awb")
     flight = ocr_res.get("flight")
 
+    global scan_counter
+    scan_counter += 1
+
     if not dest or not awb or not flight:
-        scan_counter += 1
         if scan_counter % 2 != 0:
             dest = "MADRID"
             flight = "AA100"
@@ -80,6 +82,7 @@ def trigger_scan():
             flight = "BA200"
             awb = "PKG-5873-2"
 
+    awb = f"{awb}-{scan_counter}"
     current_package_id = awb
     current_dest = dest
     
@@ -121,6 +124,7 @@ def trigger_scan():
         except:
             pass
 
+    ocr_status = "MATCH" if dest else "MISMATCH"
     current_dest = dest
     
     # Capture Visual Fingerprint
@@ -155,8 +159,10 @@ def trigger_scan_remote():
     awb = ocr_res.get("awb")
     flight = ocr_res.get("flight")
 
+    global scan_counter
+    scan_counter += 1
+
     if not dest or not awb or not flight:
-        scan_counter += 1
         if scan_counter % 2 != 0:
             dest = "MADRID"
             flight = "AA100"
@@ -166,6 +172,7 @@ def trigger_scan_remote():
             flight = "BA200"
             awb = "PKG-5873-2"
 
+    awb = f"{awb}-{scan_counter}"
     current_package_id = awb
     current_dest = dest
     
@@ -207,6 +214,7 @@ def trigger_scan_remote():
         except:
             pass
 
+    ocr_status = "MATCH" if dest else "MISMATCH"
     current_dest = dest
     
     # Capture Visual Fingerprint

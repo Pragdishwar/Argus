@@ -320,13 +320,22 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                             <td className="p-3 text-center">
                               {v ? <span className={v.zone_status === 'Correct Gate' ? 'text-green-400' : 'text-red-400'}>{v.zone_status === 'Correct Gate' ? '✓' : '×'}</span> : <span className="text-neutral-600">-</span>}
                             </td>
-                            <td className="p-3 text-right">
-                              <span 
-                                className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
-                                title={v ? `Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}` : 'Pending verification'}
-                              >
-                                {statusText}
-                              </span>
+                            <td className="p-3 text-right align-top">
+                              <div className="flex flex-col items-end justify-start h-full pt-1">
+                                <span 
+                                  className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
+                                  title={v ? `Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}` : 'Pending verification'}
+                                >
+                                  {statusText}
+                                </span>
+                                {v && v.disagreement_score >= 2 && (
+                                  <span className="text-[10px] text-red-400/70 mt-1 uppercase max-w-[120px] leading-tight text-right">
+                                    {v.zone_status !== 'Correct Gate' ? 'Wrong Gate Detected' :
+                                     v.fingerprint_status !== 'MATCH' ? 'Fingerprint Mismatch' :
+                                     v.ocr_status !== 'MATCH' ? 'OCR Mismatch' : 'Verification Failed'}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -362,13 +371,22 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                               <td className="p-3 text-center">
                                 <span className={v.zone_status === 'Correct Gate' ? 'text-green-400' : 'text-red-400'}>{v.zone_status === 'Correct Gate' ? '✓' : '×'}</span>
                               </td>
-                              <td className="p-3 text-right">
-                                <span 
-                                  className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
-                                  title={`Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}`}
-                                >
-                                  {statusText}
-                                </span>
+                              <td className="p-3 text-right align-top">
+                                <div className="flex flex-col items-end justify-start h-full pt-1">
+                                  <span 
+                                    className={`px-2 py-1 rounded cursor-help ${statusBadge}`}
+                                    title={`Vote Breakdown:\nOCR: ${v.ocr_status}\nFingerprint: ${v.fingerprint_status}\nZone: ${v.zone_status}`}
+                                  >
+                                    {statusText}
+                                  </span>
+                                  {v.disagreement_score >= 2 && (
+                                    <span className="text-[10px] text-red-400/70 mt-1 uppercase max-w-[120px] leading-tight text-right">
+                                      {v.zone_status !== 'Correct Gate' ? 'Wrong Gate Detected' :
+                                       v.fingerprint_status !== 'MATCH' ? 'Fingerprint Mismatch' :
+                                       v.ocr_status !== 'MATCH' ? 'OCR Mismatch' : 'Verification Failed'}
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );

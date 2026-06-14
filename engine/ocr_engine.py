@@ -51,6 +51,17 @@ class OCREngine:
         if match:
             best_match_str, score, _ = match
             return best_match_str, score
+            
+        # Fallback: if no known destination matches, return the longest alphabetic word
+        import re
+        words = extracted_text.replace('\n', ' ').split()
+        valid_words = [re.sub(r'[^A-Z]', '', w.upper()) for w in words]
+        valid_words = [w for w in valid_words if len(w) >= 3]
+        
+        if valid_words:
+            longest_word = max(valid_words, key=len)
+            return longest_word, 50.0
+            
         return None, 0.0
 
     def process_frame(self, frame):

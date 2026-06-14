@@ -109,9 +109,18 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                   {verifications.slice(0, 5).map((v: any, idx: number) => (
                     <div key={idx} className="flex justify-between items-center border-b border-neutral-800 pb-2 last:border-0">
                       <span className="font-mono text-sm text-neutral-300">{v.package_id}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded font-bold ${v.disagreement_score >= 2 ? 'bg-red-500/20 text-red-400' : v.disagreement_score === 1 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
-                        {v.disagreement_score >= 2 ? 'BLOCK' : v.disagreement_score === 1 ? 'WARN' : 'PASS'}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        <span className={`text-xs px-2 py-0.5 rounded font-bold ${v.disagreement_score >= 2 ? 'bg-red-500/20 text-red-400' : v.disagreement_score === 1 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                          {v.disagreement_score >= 2 ? 'BLOCK' : v.disagreement_score === 1 ? 'WARN' : 'PASS'}
+                        </span>
+                        {v.disagreement_score >= 2 && (
+                          <span className="text-[10px] text-red-400/70 mt-1 uppercase text-right leading-tight max-w-[100px]">
+                            {v.zone_status !== 'Correct Gate' ? 'Wrong Gate Detected' :
+                             v.fingerprint_status !== 'MATCH' ? 'Fingerprint Mismatch' :
+                             v.ocr_status !== 'MATCH' ? 'OCR Mismatch' : 'Verification Failed'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

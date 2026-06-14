@@ -1,5 +1,6 @@
 import cv2
 import pytesseract
+import re
 from rapidfuzz import process, fuzz
 from camera_feed import CameraFeed
 from manifest_client import ManifestClient
@@ -61,10 +62,18 @@ class OCREngine:
 
         matched_dest, score = self.correct_text_fuzzy(raw_text)
         
+        flight_match = re.search(r'FLIGHT:\s*([A-Z0-9]+)', raw_text, re.IGNORECASE)
+        flight = flight_match.group(1) if flight_match else None
+        
+        awb_match = re.search(r'AWB:\s*(PKG-\d+-\d+)', raw_text, re.IGNORECASE)
+        awb = awb_match.group(1) if awb_match else None
+        
         return {
             "raw_text": raw_text,
             "matched_destination": matched_dest,
-            "confidence_score": score
+            "confidence_score": score,
+            "flight": flight,
+            "awb": awb
         }
 
 if __name__ == "__main__":

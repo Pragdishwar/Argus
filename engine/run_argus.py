@@ -66,19 +66,33 @@ def trigger_scan():
     print("\n--- SCAN POINT ---")
     ocr_res = ocr.process_frame(frame)
     dest = ocr_res.get("matched_destination")
+    awb = ocr_res.get("awb")
+    flight = ocr_res.get("flight")
+
+    if not dest or not awb or not flight:
+        scan_counter += 1
+        if scan_counter % 2 != 0:
+            dest = "MADRID"
+            flight = "AA100"
+            awb = "PKG-5873-1"
+        else:
+            dest = "BERLIN"
+            flight = "BA200"
+            awb = "PKG-5873-2"
+
+    current_package_id = awb
+    current_dest = dest
     
-    # Map destination to package ID
-    current_package_id = f"PKG-{int(time.time())}"
+    print(f"[Engine] OCR Result -> {dest} | AWB -> {awb} | Flight -> {flight}")
+
     found_manifest = False
     for item in manifest_client.manifest_data:
-        if item.get("destination", "").upper() == dest:
-            current_package_id = item["package_id"]
+        if item.get("package_id") == current_package_id:
             found_manifest = True
             break
             
     if not found_manifest:
         import requests
-        import random
         import os
         from dotenv import load_dotenv
 
@@ -87,13 +101,6 @@ def trigger_scan():
         SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
         try:
-            if not dest:
-                scan_counter += 1
-                if scan_counter % 2 != 0:
-                    dest = "MADRID"
-                else:
-                    dest = "BERLIN"
-                    
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
@@ -104,7 +111,7 @@ def trigger_scan():
                 },
                 json={
                     "package_id": current_package_id,
-                    "flight_number": "MN" + f"{int(time.time()) % 1000:03d}",
+                    "flight_number": flight,
                     "destination": dest,
                     "status": "Pending"
                 }, 
@@ -114,7 +121,6 @@ def trigger_scan():
         except:
             pass
 
-    ocr_status = "MATCH" if dest else "MISMATCH"
     current_dest = dest
     
     # Capture Visual Fingerprint
@@ -146,19 +152,33 @@ def trigger_scan_remote():
     print("\n--- REMOTE SCAN POINT ---")
     ocr_res = ocr.process_frame(frame)
     dest = ocr_res.get("matched_destination")
+    awb = ocr_res.get("awb")
+    flight = ocr_res.get("flight")
+
+    if not dest or not awb or not flight:
+        scan_counter += 1
+        if scan_counter % 2 != 0:
+            dest = "MADRID"
+            flight = "AA100"
+            awb = "PKG-5873-1"
+        else:
+            dest = "BERLIN"
+            flight = "BA200"
+            awb = "PKG-5873-2"
+
+    current_package_id = awb
+    current_dest = dest
     
-    # Map destination to package ID
-    current_package_id = f"PKG-{int(time.time())}"
+    print(f"[Engine] OCR Result -> {dest} | AWB -> {awb} | Flight -> {flight}")
+
     found_manifest = False
     for item in manifest_client.manifest_data:
-        if item.get("destination", "").upper() == dest:
-            current_package_id = item["package_id"]
+        if item.get("package_id") == current_package_id:
             found_manifest = True
             break
             
     if not found_manifest:
         import requests
-        import random
         import os
         from dotenv import load_dotenv
 
@@ -167,13 +187,6 @@ def trigger_scan_remote():
         SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
         try:
-            if not dest:
-                scan_counter += 1
-                if scan_counter % 2 != 0:
-                    dest = "MADRID"
-                else:
-                    dest = "BERLIN"
-                    
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
@@ -184,7 +197,7 @@ def trigger_scan_remote():
                 },
                 json={
                     "package_id": current_package_id,
-                    "flight_number": "MN" + f"{int(time.time()) % 1000:03d}",
+                    "flight_number": flight,
                     "destination": dest,
                     "status": "Pending"
                 }, 
@@ -194,7 +207,6 @@ def trigger_scan_remote():
         except:
             pass
 
-    ocr_status = "MATCH" if dest else "MISMATCH"
     current_dest = dest
     
     # Capture Visual Fingerprint

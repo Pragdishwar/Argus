@@ -87,6 +87,8 @@ def trigger_scan():
 
         try:
             dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
+            if not dest:
+                dest = random.choice(dummy_cities)
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
@@ -98,7 +100,7 @@ def trigger_scan():
                 json={
                     "package_id": current_package_id,
                     "flight_number": "MN" + str(int(time.time()) % 1000),
-                    "destination": dest if dest else random.choice(dummy_cities),
+                    "destination": dest,
                     "status": "Pending"
                 }, 
                 timeout=2
@@ -161,6 +163,8 @@ def trigger_scan_remote():
 
         try:
             dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
+            if not dest:
+                dest = random.choice(dummy_cities)
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
@@ -172,7 +176,7 @@ def trigger_scan_remote():
                 json={
                     "package_id": current_package_id,
                     "flight_number": "MN" + str(int(time.time()) % 1000),
-                    "destination": dest if dest else random.choice(dummy_cities),
+                    "destination": dest,
                     "status": "Pending"
                 }, 
                 timeout=2

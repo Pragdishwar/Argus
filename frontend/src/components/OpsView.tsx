@@ -63,10 +63,20 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
       }
     };
 
-  const pendingCount = 5; // Mock
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('en-US', { hour12: false }));
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', { hour12: false }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const loadedCount = verifications.filter((v: any) => v.disagreement_score === 0).length;
   const blockedCount = verifications.filter((v: any) => v.disagreement_score >= 2).length;
-  const manifestCount = pendingCount + loadedCount + blockedCount;
+  const holdCount = verifications.filter((v: any) => v.disagreement_score === 1).length;
+  const pendingCount = manifests ? manifests.filter((m: any) => !verifications.some((v: any) => v.package_id === m.package_id)).length : 0;
+  const manifestCount = (manifests?.length || 0) + verifications.filter((v: any) => !manifests?.some((m: any) => m.package_id === v.package_id)).length;
 
   return (
     <div className="p-6 h-[calc(100vh-80px)] overflow-y-auto">
@@ -218,7 +228,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
               </div>
               <div className="p-2 border-t border-neutral-800 flex justify-between items-center bg-neutral-950/50 text-[10px] font-mono text-neutral-500 relative z-20">
                 <span>[ ] OCR active - 1280x720 - {isStreaming ? "30fps" : "0fps"}</span>
-                <span>07:42:18</span>
+                <span>{currentTime}</span>
               </div>
             </div>
 
@@ -243,7 +253,7 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                      <div className={`text-xs font-mono font-bold ${i === 0 ? 'text-green-400' : 'text-neutral-500'}`}>{gate}</div>
                      <div className="mt-auto space-y-1 text-[10px] font-mono">
                         <div className="flex justify-between text-green-500"><span>✓</span> <span>{i === 0 ? loadedCount : 0}</span></div>
-                        <div className="flex justify-between text-yellow-500"><span>!</span> <span>{i === 0 ? (pendingCount > 0 ? 1 : 0) : 0}</span></div>
+                        <div className="flex justify-between text-yellow-500"><span>!</span> <span>{i === 0 ? holdCount : 0}</span></div>
                         <div className="flex justify-between text-red-500"><span>×</span> <span>{i === 0 ? blockedCount : 0}</span></div>
                      </div>
                    </div>
@@ -254,10 +264,18 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
 
           {/* Cargo Manifest Table */}
           <section className="flex-1 min-h-0 flex flex-col">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-xs font-bold text-neutral-500 tracking-widest uppercase">Cargo Manifest</h3>
-              <div className="text-xs text-neutral-500">{(manifests?.length || 0) + verifications.filter((v: any) => !manifests?.some((m: any) => m.package_id === v.package_id)).length} records</div>
-            </div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-neutral-500 tracking-widest uppercase flex items-center gap-2">
+                  <Activity size={14} className="text-blue-500" />
+                  Cargo Manifest
+                </h3>
+              <div className="text-xs text-neutral-500">
+                {(() => {
+                  const count = (manifests?.length || 0) + verifications.filter((v: any) => !manifests?.some((m: any) => m.package_id === v.package_id)).length;
+                  return `${count} record${count === 1 ? '' : 's'}`;
+                })()}
+              </div>
+              </div>
             <div className="bg-neutral-900 border border-neutral-800 rounded-lg flex-1 overflow-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-neutral-950 text-neutral-500 sticky top-0 border-b border-neutral-800">

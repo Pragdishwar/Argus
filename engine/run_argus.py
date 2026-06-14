@@ -104,7 +104,7 @@ def trigger_scan():
                 },
                 json={
                     "package_id": current_package_id,
-                    "flight_number": "MN" + str(int(time.time()) % 1000),
+                    "flight_number": "MN" + f"{int(time.time()) % 1000:03d}",
                     "destination": dest,
                     "status": "Pending"
                 }, 
@@ -184,7 +184,7 @@ def trigger_scan_remote():
                 },
                 json={
                     "package_id": current_package_id,
-                    "flight_number": "MN" + str(int(time.time()) % 1000),
+                    "flight_number": "MN" + f"{int(time.time()) % 1000:03d}",
                     "destination": dest,
                     "status": "Pending"
                 }, 

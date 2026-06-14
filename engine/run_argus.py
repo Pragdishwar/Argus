@@ -221,13 +221,18 @@ def trigger_verify():
     
     # 3. Voting Engine
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
-    score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
-    # FOR DEMO: Force failure on even verification attempts
-    if verify_counter % 2 == 0:
-        z_status = "Wrong Gate"
+    # FOR DEMO: Absolute Override BEFORE database upload
+    if verify_counter % 2 != 0:
+        ocr_is_match = "MATCH"
+        fp_status = "MATCH"
+        z_status = "Correct Gate"
+    else:
+        ocr_is_match = "MISMATCH"
         fp_status = "MISMATCH"
-        score = 2
+        z_status = "Wrong Gate"
+        
+    score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
     resp = {
         "status": "success",
@@ -268,13 +273,18 @@ def trigger_verify_remote():
     
     # 3. Voting Engine
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
-    score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
-    # FOR DEMO: Force failure on even verification attempts
-    if verify_counter % 2 == 0:
-        z_status = "Wrong Gate"
+    # FOR DEMO: Absolute Override BEFORE database upload
+    if verify_counter % 2 != 0:
+        ocr_is_match = "MATCH"
+        fp_status = "MATCH"
+        z_status = "Correct Gate"
+    else:
+        ocr_is_match = "MISMATCH"
         fp_status = "MISMATCH"
-        score = 2
+        z_status = "Wrong Gate"
+        
+    score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
     resp = {
         "status": "success",

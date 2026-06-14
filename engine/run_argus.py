@@ -69,20 +69,14 @@ def trigger_scan():
     awb = ocr_res.get("awb")
     flight = ocr_res.get("flight")
 
-    global scan_counter
-    scan_counter += 1
-
     if not dest or not awb or not flight:
-        if scan_counter % 2 != 0:
-            dest = "MADRID"
-            flight = "AA100"
-            awb = "PKG-5873-1"
-        else:
-            dest = "BERLIN"
-            flight = "BA200"
-            awb = "PKG-5873-2"
+        import random
+        import time
+        dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
+        dest = random.choice(dummy_cities) if not dest else dest
+        flight = "MN" + f"{int(time.time()) % 1000:03d}" if not flight else flight
+        awb = f"PKG-{int(time.time())}" if not awb else awb
 
-    awb = f"{awb}-{scan_counter}"
     current_package_id = awb
     current_dest = dest
     
@@ -159,20 +153,14 @@ def trigger_scan_remote():
     awb = ocr_res.get("awb")
     flight = ocr_res.get("flight")
 
-    global scan_counter
-    scan_counter += 1
-
     if not dest or not awb or not flight:
-        if scan_counter % 2 != 0:
-            dest = "MADRID"
-            flight = "AA100"
-            awb = "PKG-5873-1"
-        else:
-            dest = "BERLIN"
-            flight = "BA200"
-            awb = "PKG-5873-2"
+        import random
+        import time
+        dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
+        dest = random.choice(dummy_cities) if not dest else dest
+        flight = "MN" + f"{int(time.time()) % 1000:03d}" if not flight else flight
+        awb = f"PKG-{int(time.time())}" if not awb else awb
 
-    awb = f"{awb}-{scan_counter}"
     current_package_id = awb
     current_dest = dest
     
@@ -250,16 +238,6 @@ def trigger_verify():
     
     # 3. Voting Engine
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
-    
-    # FOR DEMO: Absolute Override BEFORE database upload
-    if verify_counter % 2 != 0:
-        ocr_is_match = "MATCH"
-        fp_status = "MATCH"
-        z_status = "Correct Gate"
-    else:
-        ocr_is_match = "MISMATCH"
-        fp_status = "MISMATCH"
-        z_status = "Wrong Gate"
         
     score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     
@@ -302,16 +280,6 @@ def trigger_verify_remote():
     
     # 3. Voting Engine
     ocr_is_match = "MATCH" if current_dest else "MISMATCH"
-    
-    # FOR DEMO: Absolute Override BEFORE database upload
-    if verify_counter % 2 != 0:
-        ocr_is_match = "MATCH"
-        fp_status = "MATCH"
-        z_status = "Correct Gate"
-    else:
-        ocr_is_match = "MISMATCH"
-        fp_status = "MISMATCH"
-        z_status = "Wrong Gate"
         
     score = voting.process_verification(current_package_id, ocr_is_match, fp_status, z_status)
     

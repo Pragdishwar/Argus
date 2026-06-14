@@ -317,18 +317,10 @@ export default function OpsView({ verifications, alerts, manifests, isStreaming,
                           }
                         }
 
-                        let gateNum = (m.destination.length % 5) + 1;
-                        let gateChar = String.fromCharCode(65 + (m.id % 4)); 
-                        let gate = `${gateChar}0${gateNum}`;
-                        let weight = (100 + (m.id * 13.5)).toFixed(1);
-
-                        if (m.package_id.startsWith('PKG-5873-1')) {
-                          weight = '154.0';
-                          gate = 'A04';
-                        } else if (m.package_id.startsWith('PKG-5873-2')) {
-                          weight = '167.5';
-                          gate = 'B02';
-                        }
+                        const gateNum = (m.destination.length % 5) + 1;
+                        const gateChar = String.fromCharCode(65 + (m.id % 4)); 
+                        const gate = `${gateChar}0${gateNum}`;
+                        const weight = (100 + (m.id * 13.5)).toFixed(1);
 
                         return (
                           <tr key={`m-${idx}`} className="hover:bg-neutral-800/30">

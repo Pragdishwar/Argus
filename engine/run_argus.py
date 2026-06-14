@@ -30,6 +30,7 @@ camera.start()
 current_package_id = None
 current_dest = None
 verify_counter = 0
+scan_counter = 0
 
 def generate_frames():
     """Generator for MJPEG stream"""
@@ -56,7 +57,7 @@ def video_feed():
 
 @app.route('/scan', methods=['POST'])
 def trigger_scan():
-    global current_package_id, current_dest
+    global current_package_id, current_dest, scan_counter
     
     ret, frame = camera.get_frame()
     if not ret:
@@ -86,9 +87,13 @@ def trigger_scan():
         SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
         try:
-            dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
             if not dest:
-                dest = random.choice(dummy_cities)
+                scan_counter += 1
+                if scan_counter % 2 != 0:
+                    dest = "MADRID"
+                else:
+                    dest = "BERLIN"
+                    
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={
@@ -131,7 +136,7 @@ def decode_base64_image(b64_str):
 
 @app.route('/scan_remote', methods=['POST'])
 def trigger_scan_remote():
-    global current_package_id, current_dest
+    global current_package_id, current_dest, scan_counter
     data = request.json
     if not data or 'image' not in data:
         return jsonify({"status": "error", "message": "No image provided"}), 400
@@ -162,9 +167,13 @@ def trigger_scan_remote():
         SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
         try:
-            dummy_cities = ["SYDNEY", "BERLIN", "ROME", "DUBAI", "MADRID"]
             if not dest:
-                dest = random.choice(dummy_cities)
+                scan_counter += 1
+                if scan_counter % 2 != 0:
+                    dest = "MADRID"
+                else:
+                    dest = "BERLIN"
+                    
             requests.post(
                 f"{SUPABASE_URL}/rest/v1/manifests", 
                 headers={

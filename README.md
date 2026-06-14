@@ -4,69 +4,59 @@ ARGUS is a pure-software, AI-powered cargo verification system designed to preve
 
 Unlike existing solutions that verify packages only at the scan point, ARGUS continuously tracks both the physical cargo object and the handler carrying it through to the aircraft door using a "Triple-Redundancy" computer vision system.
 
-## 🚀 Tech Stack
+## 🚀 Deployed Application
+The Argus dashboard is live! You can access the fully operational frontend here:
+**[https://argus-red.vercel.app/](https://argus-red.vercel.app/)**
 
-**Frontend:** Next.js 14, React, Tailwind CSS
-**Backend:** Python, FastAPI, WebSockets, SQLite
-**Computer Vision:** OpenCV, MediaPipe Pose Estimation, PyTesseract, RapidFuzz
+## 🛠️ Tech Stack
+
+**Frontend:** Next.js 14, React, Tailwind CSS (Deployed on Vercel)
+**Backend & Database:** Supabase (PostgreSQL, REST API)
+**Computer Vision (Edge):** Python, OpenCV, YOLOv8 Nano, PyTesseract, RapidFuzz
 
 ## 🧠 Core Systems (Triple Redundancy)
 
-1. **OCR Verification:** Reads the physical label on the box and cross-references it with the flight manifest.
+1. **OCR Verification:** Reads the physical label on the box and cross-references it with the Supabase flight manifest. Uses fuzzy string matching to dynamically detect routing cities.
 2. **Visual Fingerprinting:** Takes a Hue/Saturation histogram snapshot at the scan point and compares it to the box being loaded at the aircraft door to prevent package swapping.
-3. **Zone Tracking:** Uses Pose Estimation to track the cargo handler's center of mass, ensuring they walk to the correct assigned flight gate.
+3. **Zone Tracking:** Uses Pose Estimation and Object Detection to track the cargo handler's center of mass, ensuring they walk to the correct assigned flight gate.
 
-If the system detects 2 or more conflicts across these three checks, it automatically triggers a Critical Alert and sends a halt command to the conveyor belt API.
+If the system detects 2 or more conflicts across these three checks, it automatically triggers a Critical Alert in the dashboard.
 
 ---
 
-## 🛠️ How to Run Locally
+## 💻 How to Run the Edge AI Engine Locally
 
-Because ARGUS relies on a microservice architecture, you need to run its components simultaneously. Open **5 separate terminal windows** and run the following commands from the root `Argus` directory.
+The frontend dashboard runs in the cloud, but the heavy Computer Vision processing happens on the "edge" (your local machine's camera). To feed live camera data into the dashboard:
 
-### 1. Start the FastAPI Backend & WebSockets
-```powershell
-cd backend
-.\venv\Scripts\activate
-uvicorn main:app --reload
-```
-*(Runs on http://127.0.0.1:8000)*
-
-### 2. Start the Mock Conveyor API
+### 1. Install Requirements
 ```powershell
 cd engine
+python -m venv venv
 .\venv\Scripts\activate
-python mock_conveyor_api.py
+pip install -r requirements.txt
 ```
-*(Runs on http://127.0.0.1:5001)*
 
-### 3. Start the Mock Manifest API
-```powershell
-cd engine
-.\venv\Scripts\activate
-python mock_manifest_api.py
+### 2. Configure Environment
+Ensure your `.env` file in the `engine` directory contains your Supabase connection strings:
+```env
+SUPABASE_URL="your-supabase-url"
+SUPABASE_KEY="your-supabase-key"
 ```
-*(Runs on http://127.0.0.1:5000)*
 
-### 4. Start the Next.js Dashboard
-```powershell
-cd frontend
-npm run dev
-```
-*(Runs on http://localhost:3000)*
-
-### 5. Launch the Computer Vision Engine
-*Make sure the previous 4 services are running before launching this.*
+### 3. Launch the Computer Vision Engine
 ```powershell
 cd engine
 .\venv\Scripts\activate
 python run_argus.py
 ```
 
-## 🎮 How to Test the Demo
-Once the Computer Vision engine (Terminal 5) is running, your webcam will activate.
-1. Press **`s`** on your keyboard to simulate a package arriving at the **Scan Point**.
-2. Wait a moment, then press **`v`** to simulate that same package arriving at the **Verification Point** (the aircraft door).
-3. Watch the Next.js Dashboard (http://localhost:3000) instantly populate with live verification data and alerts via WebSockets!
+## 🎮 How to Test
 
-> **Note on MediaPipe & Tesseract:** For demonstration purposes on systems without Tesseract installed or running newer incompatible versions of Python (like 3.13), the engine will gracefully degrade to simulated mock tracking to ensure the full dashboard and backend pipeline remains testable.
+1. Open the [Live Dashboard](https://argus-red.vercel.app/).
+2. Run `python run_argus.py` on your machine.
+3. On the dashboard, click **START STREAM** and select **Local Cam** or **Edge Cam** depending on your setup.
+4. Hold a piece of paper up to the camera with a recognized city written on it (e.g. `MADRID`, `BERLIN`, `SYDNEY`, `DUBAI`, or `ROME`).
+5. Click **Scan** on the dashboard. The system will extract the text, look it up in the live Supabase manifest, and calculate the gate and weight.
+6. Click **Verify** to simulate the package arriving at the aircraft door. The fingerprint and zone analyzer will cross-check the data!
+
+> **Note on Webcams:** The Python engine automatically mirrors your video feed behind the scenes. This means you can write normally on your piece of paper and hold it up to a standard front-facing webcam, and the OCR engine will perfectly read it forward!
